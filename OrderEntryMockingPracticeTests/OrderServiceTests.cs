@@ -233,5 +233,40 @@ namespace OrderEntryMockingPracticeTests
             Assert.That(orderSummary.OrderId, Is.EqualTo(expectedIDNumber));
 
         }
+
+        [Test]
+        public void TaxesCanBeRetrievedFromTaxRateService()
+        {
+            var order = MakeOrders();
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
+            _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+
+            var expectedTaxes = new List<TaxEntry>()
+            {
+                new TaxEntry()
+                {
+                    Description = "TaxOne",
+                    Rate = 0.10m,
+                },
+                new TaxEntry()
+                {
+                    Description = "TaxTwo",
+                    Rate = 0.20m,
+                }
+            };
+
+            _mockITaxRateService.Stub(s => s.GetTaxEntries(Arg<string>.Is.Anything, Arg<string>.Is.Anything)).Return(expectedTaxes);
+
+            var orderSummary = orderService.PlaceOrder(order);
+
+
+            Assert.That(orderSummary.Taxes, Is.Not.Null);
+        }
     }
 }
