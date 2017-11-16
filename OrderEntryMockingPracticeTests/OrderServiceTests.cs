@@ -269,5 +269,30 @@ namespace OrderEntryMockingPracticeTests
             Assert.That(orderSummary.Taxes, Is.Not.Null);
             Assert.That(orderSummary.Taxes, Is.EqualTo(expectedTaxes));
         }
+
+        [Test]
+        public void ValidOrder_SendsConfirmationEMailToCustomer()
+        {
+            var order = MakeOrders();
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
+            _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+
+            var orderSummary = orderService.PlaceOrder(order);
+
+            Assert.IsNotNull(orderSummary);
+            _mockIEmailService.AssertWasCalled(es => es.SendOrderConfirmationEmail(orderSummary.CustomerId,orderSummary.OrderId));
+        }
+
+        [Test]
+        public void CustomerInformation_CanBePulledFromCustomerRepository()
+        {
+            
+        }
     }
 }
