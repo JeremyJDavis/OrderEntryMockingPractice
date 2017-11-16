@@ -267,6 +267,7 @@ namespace OrderEntryMockingPracticeTests
 
 
             Assert.That(orderSummary.Taxes, Is.Not.Null);
+            Assert.That(orderSummary.Taxes, Is.EqualTo(expectedTaxes));
         }
     }
 }

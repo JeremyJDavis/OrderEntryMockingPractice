@@ -45,7 +45,7 @@ namespace OrderEntryMockingPractice.Services
             {
                 OrderNumber = confirmation.OrderNumber,
                 OrderId = confirmation.OrderId,
-                Taxes = new List<TaxEntry>(),
+                Taxes = _taxRateService.GetTaxEntries("postalCode","country"),
             };
 
             return orderSummary;
