@@ -9,7 +9,6 @@ using Rhino.Mocks;
 
 namespace OrderEntryMockingPracticeTests
 {
-
     [TestFixture]
     public class OrderServiceTests
     {
@@ -71,25 +70,6 @@ namespace OrderEntryMockingPracticeTests
             return order;
         }
         
-        public TaxEntry MakeTaxEntry()
-        {
-                var taxes = new TaxEntry
-                {
-                    Description = "TheTaxRate",
-                    Rate = 0.10m
-                };
-                return taxes;
-        }
-
-        public Customer MakeCustomer()
-        {
-            var customer = new Customer
-            {
-                CustomerId = 1
-            };
-            return customer;
-        }
-
         [Test]
         public void OrderItemsAreUniqueByProductSku()
         {
@@ -375,7 +355,7 @@ namespace OrderEntryMockingPracticeTests
         [Test]
         public void CustomerInformation_CanBePulledFromCustomerRepository()
         {
-            var expectedCustomerId = MakeCustomer();
+            
 
             var order = MakeOrders();
 
@@ -403,10 +383,10 @@ namespace OrderEntryMockingPracticeTests
 
             var orderSummary = orderService.PlaceOrder(order);
 
-            _mockICustomerRepository.Stub(r => r.Get(Arg<int>.Is.Anything)).Return(expectedCustomerId);
-
+            var expectedCustomerId = 1;
+            
             Assert.That(orderSummary.CustomerId, Is.Not.Null);
-            Assert.That(orderSummary.CustomerId, Is.EqualTo(expectedCustomerId.CustomerId));
+            Assert.That(orderSummary.CustomerId, Is.EqualTo(expectedCustomerId));
         }
 
         [Test]
