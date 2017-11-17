@@ -69,8 +69,7 @@ namespace OrderEntryMockingPracticeTests
             };
             return order;
         }
-
-
+        
         public TaxEntry MakeTaxEntry()
         {
                 var taxes = new TaxEntry
@@ -85,15 +84,7 @@ namespace OrderEntryMockingPracticeTests
         {
             var customer = new Customer
             {
-                CustomerId = 1,
-                AddressLine1 = "1918 Eighth Ave",
-                AddressLine2 = "Suite 3100",
-                City = "Seattle",
-                Country = "USA",
-                CustomerName = "Joe Money",
-                EmailAddress = "name@domain.com",
-                PostalCode = "98101",
-                StateOrProvince = "WA"
+                CustomerId = 1
             };
             return customer;
         }
@@ -103,12 +94,14 @@ namespace OrderEntryMockingPracticeTests
         {
             var order = MakeOrders();
 
-            _mockIProductRepository.Stub(a => a.IsInStock(Arg<string>.Is.Anything)).Return(true);
-
-            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
-
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock(Arg<string>.Is.Anything)).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
+
             var result = orderService.PlaceOrder(order);
 
             Assert.IsNotNull(result);
@@ -118,6 +111,7 @@ namespace OrderEntryMockingPracticeTests
         public void OrderItemsNotUniqueByProductSkuReturnsNull()
         {
             var order = MakeOrders();
+
             order.OrderItems[1].Product.Sku = order.OrderItems[0].Product.Sku;
 
             var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
@@ -126,6 +120,7 @@ namespace OrderEntryMockingPracticeTests
 
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
+
             var result = orderService.PlaceOrder(order);
 
             Assert.IsNull(result);
@@ -139,7 +134,8 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
-            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
@@ -174,7 +170,8 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
-            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
@@ -185,11 +182,6 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.AssertWasCalled(ofs => ofs.Fulfill(order));
         }
 
-        [Test]
-        public void InvalidOrder_ReturnsValidationListExceptions()
-        {
-            //
-        }
 
         [Test]
         public void ValidOrderSummary_ContainsOrderFulfillmentConfirmationNumber()
@@ -205,7 +197,7 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
-                .Return(new OrderConfirmation {OrderNumber = expectedOrderNumber});
+                .Return(new OrderConfirmation { OrderNumber = expectedOrderNumber, CustomerId = 1, OrderId = 7 });
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -226,7 +218,7 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
-                .Return(new OrderConfirmation { OrderId = expectedIDNumber });
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = expectedIDNumber });
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -245,7 +237,8 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
-            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
             var expectedTaxes = new List<TaxEntry>()
             {
@@ -281,7 +274,8 @@ namespace OrderEntryMockingPracticeTests
             _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
             _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
 
-            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order));
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -292,7 +286,39 @@ namespace OrderEntryMockingPracticeTests
         [Test]
         public void CustomerInformation_CanBePulledFromCustomerRepository()
         {
+            var expectedCustomerId = MakeCustomer();
+
+            var order = MakeOrders();
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
+            _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
+
+            var orderSummary = orderService.PlaceOrder(order);
+
+            _mockICustomerRepository.Stub(r => r.Get(Arg<int>.Is.Anything)).Return(expectedCustomerId);
+
+            Assert.That(orderSummary.CustomerId, Is.Not.Null);
+            Assert.That(orderSummary.CustomerId, Is.EqualTo(expectedCustomerId.CustomerId.Value));
+        }
+
+        [Test]
+        public void ValidOrderSummary_ContainsApplicableTaxesForTheCustomer()
+        {
             
         }
+
+        [Test]
+        public void InvalidOrder_ReturnsValidationListExceptions()
+        {
+            
+        }
+
+
     }
 }

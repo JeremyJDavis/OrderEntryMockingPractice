@@ -40,9 +40,11 @@ namespace OrderEntryMockingPractice.Services
                     return null;
    
             var confirmation =  _orderFulfillmentService.Fulfill(order);
-            
+
+
             var orderSummary = new OrderSummary
             {
+                CustomerId = confirmation.CustomerId,
                 OrderNumber = confirmation.OrderNumber,
                 OrderId = confirmation.OrderId,
                 Taxes = _taxRateService.GetTaxEntries("postalCode","country"),
