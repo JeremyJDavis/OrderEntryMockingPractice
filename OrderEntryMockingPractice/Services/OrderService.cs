@@ -31,7 +31,7 @@ namespace OrderEntryMockingPractice.Services
         {
             var skus = order.OrderItems.Select(x => x.Product.Sku);
             
-            if (!StringsAreUnique(skus))
+            if (!SKUsAreUnique(skus))
                 //add exception to list
                  return null;
             foreach (var sku in skus)
@@ -41,13 +41,19 @@ namespace OrderEntryMockingPractice.Services
    
             var confirmation =  _orderFulfillmentService.Fulfill(order);
 
+            var customer = _customerRepository.Get(confirmation.CustomerId);
+
+            var taxes = _taxRateService.GetTaxEntries("POstalCode","Country");
+
+            var netTotal = order.OrderItems.Sum(c => c.Quantity * c.Product.Price);
 
             var orderSummary = new OrderSummary
             {
                 CustomerId = confirmation.CustomerId,
                 OrderNumber = confirmation.OrderNumber,
                 OrderId = confirmation.OrderId,
-                Taxes = _taxRateService.GetTaxEntries("postalCode","country"),
+                NetTotal = netTotal,
+                Taxes = taxes,
             };
 
             _emailService.SendOrderConfirmationEmail(orderSummary.CustomerId,orderSummary.OrderId);
@@ -55,7 +61,7 @@ namespace OrderEntryMockingPractice.Services
             return orderSummary;
         }
 
-        private bool StringsAreUnique(IEnumerable<string> strings)
+        private bool SKUsAreUnique(IEnumerable<string> strings)
         {
             return strings.Distinct().Count() == strings.Count();
         }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using NUnit.Framework.Internal;
@@ -304,15 +305,43 @@ namespace OrderEntryMockingPracticeTests
             _mockICustomerRepository.Stub(r => r.Get(Arg<int>.Is.Anything)).Return(expectedCustomerId);
 
             Assert.That(orderSummary.CustomerId, Is.Not.Null);
-            Assert.That(orderSummary.CustomerId, Is.EqualTo(expectedCustomerId.CustomerId.Value));
+            Assert.That(orderSummary.CustomerId, Is.EqualTo(expectedCustomerId.CustomerId));
         }
 
         [Test]
-        public void ValidOrderSummary_ContainsApplicableTaxesForTheCustomer()
+        public void ValidOrderSummary_ContainsCorrectNetTotalForCustomer()
         {
-            
+            var order = MakeOrders();
+
+            var expectedTaxes = new List<TaxEntry>()
+            {
+                new TaxEntry()
+                {
+                    Description = "TaxOne",
+                    Rate = 0.10m,
+                }
+            };
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
+            _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
+
+            _mockITaxRateService.Stub(s => s.GetTaxEntries(Arg<string>.Is.Anything, Arg<string>.Is.Anything))
+                .Return(expectedTaxes);
+
+            var orderSummary = orderService.PlaceOrder(order);
+
+            var expectedNetTotal = order.OrderItems.Sum(i => i.Quantity * i.Product.Price);
+
+            Assert.That(orderSummary.NetTotal, Is.EqualTo(expectedNetTotal));
         }
 
+       
         [Test]
         public void InvalidOrder_ReturnsValidationListExceptions()
         {
