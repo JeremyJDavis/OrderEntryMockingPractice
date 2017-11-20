@@ -29,15 +29,8 @@ namespace OrderEntryMockingPractice.Services
         
         public OrderSummary PlaceOrder(Order order)
         {
-            var skus = order.OrderItems.Select(x => x.Product.Sku);
-            
-            if (!SKUsAreUnique(skus))
-                //add exception to list
-                 return null;
-            foreach (var sku in skus)
-                if (!_productRepository.IsInStock(sku))
-                    //add exception to list
-                    return null;
+            if (!ValidateOrder(order))
+                return null;
    
             var confirmation =  _orderFulfillmentService.Fulfill(order);
 
@@ -61,10 +54,18 @@ namespace OrderEntryMockingPractice.Services
             return orderSummary;
         }
 
-        private bool SKUsAreUnique(IEnumerable<string> skus)
+        private bool ValidateOrder(Order order)
+        {
+            var skus = order.OrderItems.Select(x => x.Product.Sku);
+
+            var skusList = skus as IList<string> ?? skus.ToList();
+            return SkusAreUnique(skusList) && skusList.All(sku => _productRepository.IsInStock(sku));
+        }
+
+        private static bool SkusAreUnique(IEnumerable<string> skus)
         {
             var skuList = skus as IList<string> ?? skus.ToList();
-            return skuList.Distinct().Count() == skuList.Count();
+            return skuList.Distinct().Count() == skuList.Count;
         }
     }
 }

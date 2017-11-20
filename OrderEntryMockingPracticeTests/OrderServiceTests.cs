@@ -399,7 +399,46 @@ namespace OrderEntryMockingPracticeTests
             Assert.That(orderSummary.NetTotal, Is.EqualTo(expectedNetTotal));
         }
 
-       
+        [Test]
+        public void ValidOrderSummary_CalculatesTaxesForCustomer()
+        {
+            var order = MakeOrders();
+
+            var expectedTaxes = new List<TaxEntry>()
+            {
+                new TaxEntry()
+                {
+                    Description = "TaxOne",
+                    Rate = 0.10m,
+                }
+            };
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            _mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(true);
+            _mockIProductRepository.Stub(a => a.IsInStock("BCDEF")).Return(true);
+
+            _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
+                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
+
+            var customer = new Customer
+            {
+                CustomerId = 1,
+                PostalCode = "99999",
+                StateOrProvince = "WA"
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
+
+            _mockITaxRateService.Stub(s => s.GetTaxEntries(Arg<string>.Is.Anything, Arg<string>.Is.Anything))
+                .Return(expectedTaxes);
+
+            var orderSummary = orderService.PlaceOrder(order);
+
+            Assert.That(orderSummary.Taxes, Is.EqualTo(expectedTaxes));
+        }
+        
         [Test]
         public void InvalidOrder_ReturnsValidationListExceptions()
         {
