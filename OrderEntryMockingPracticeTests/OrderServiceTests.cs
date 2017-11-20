@@ -32,7 +32,7 @@ namespace OrderEntryMockingPracticeTests
             _mockITaxRateService = MockRepository.GenerateMock<ITaxRateService>();
         }
 
-        public Order MakeOrders()
+        private static Order MakeOrders()
         {
             var order = new Order
             {
@@ -43,8 +43,6 @@ namespace OrderEntryMockingPracticeTests
                     {
                         Product = new Product
                         {
-                            Description = "Thing1",
-                            Name = "ThingOne",
                             Price = 10.0m,
                             ProductId = 5,
                             Sku = "ABCDE"
@@ -55,8 +53,6 @@ namespace OrderEntryMockingPracticeTests
                     {
                         Product = new Product
                         {
-                            Description = "Thing2",
-                            Name = "ThingTwo",
                             Price = 11.0m,
                             ProductId = 6,
                             Sku = "BCDEF"
@@ -80,24 +76,21 @@ namespace OrderEntryMockingPracticeTests
 
             _mockIProductRepository.Stub(a => a.IsInStock(Arg<string>.Is.Anything)).Return(true);
 
+            var orderConfirmation = new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 };
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
-                .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
+                .Return(orderConfirmation);
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var result = orderService.PlaceOrder(order);
-
+            
             Assert.IsNotNull(result);
         }
 
@@ -131,18 +124,14 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
@@ -182,18 +171,15 @@ namespace OrderEntryMockingPracticeTests
 
             var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
                 _mockIOrderFulfillmentService, _mockITaxRateService);
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -217,18 +203,15 @@ namespace OrderEntryMockingPracticeTests
 
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = expectedOrderNumber, CustomerId = 1, OrderId = 7 });
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -251,18 +234,14 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = expectedIDNumber });
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -283,18 +262,15 @@ namespace OrderEntryMockingPracticeTests
 
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var expectedTaxes = new List<TaxEntry>()
             {
@@ -333,18 +309,14 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -368,18 +340,14 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             var orderSummary = orderService.PlaceOrder(order);
 
@@ -412,18 +380,14 @@ namespace OrderEntryMockingPracticeTests
             _mockIOrderFulfillmentService.Stub(s => s.Fulfill(order))
                 .Return(new OrderConfirmation { OrderNumber = "AX1123", CustomerId = 1, OrderId = 7 });
 
-            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(new Customer
+            var customer = new Customer
             {
-                AddressLine1 = "1918 Eigth Ave",
-                AddressLine2 = "",
-                City = "Seattle",
-                Country = "USA",
                 CustomerId = 1,
-                CustomerName = "Bob Consumer",
-                EmailAddress = "bob@foo.com",
                 PostalCode = "99999",
                 StateOrProvince = "WA"
-            });
+            };
+
+            _mockICustomerRepository.Stub(c => c.Get(Arg<int>.Is.Anything)).Return(customer);
 
             _mockITaxRateService.Stub(s => s.GetTaxEntries(Arg<string>.Is.Anything, Arg<string>.Is.Anything))
                 .Return(expectedTaxes);

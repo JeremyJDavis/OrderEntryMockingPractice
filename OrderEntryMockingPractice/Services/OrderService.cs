@@ -61,9 +61,10 @@ namespace OrderEntryMockingPractice.Services
             return orderSummary;
         }
 
-        private bool SKUsAreUnique(IEnumerable<string> strings)
+        private bool SKUsAreUnique(IEnumerable<string> skus)
         {
-            return strings.Distinct().Count() == strings.Count();
+            var skuList = skus as IList<string> ?? skus.ToList();
+            return skuList.Distinct().Count() == skuList.Count();
         }
     }
 }
