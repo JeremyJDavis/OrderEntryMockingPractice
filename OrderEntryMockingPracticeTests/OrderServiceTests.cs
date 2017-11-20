@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
-using NUnit.Framework.Internal;
 using OrderEntryMockingPractice.Models;
 using OrderEntryMockingPractice.Services;
 using Rhino.Mocks;
@@ -95,25 +94,6 @@ namespace OrderEntryMockingPracticeTests
         }
 
         [Test]
-        public void OrderItemsNotUniqueByProductSkuReturnsNull()
-        {
-            var order = MakeOrders();
-
-            order.OrderItems[1].Product.Sku = order.OrderItems[0].Product.Sku;
-
-            var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
-
-            mockIProductRepository.Stub(a => a.IsInStock(Arg<string>.Is.Anything)).Return(false);
-
-            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
-                _mockIOrderFulfillmentService, _mockITaxRateService);
-
-            var result = orderService.PlaceOrder(order);
-
-            Assert.IsNull(result);
-        }
-
-        [Test]
         public void AllOrderItemsMustBeInStock()
         {
             var order = MakeOrders();
@@ -139,23 +119,6 @@ namespace OrderEntryMockingPracticeTests
             var result = orderService.PlaceOrder(order);
 
             Assert.IsNotNull(result);
-        }
-
-        [Test]
-        public void OrderItemsNotInStockReturnNull()
-        {
-            var order = MakeOrders();
-
-            var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
-
-            mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(false);
-
-            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
-                _mockIOrderFulfillmentService, _mockITaxRateService);
-
-            var result = orderService.PlaceOrder(order);
-
-            Assert.IsNull(result);
         }
 
         [Test]
@@ -400,7 +363,7 @@ namespace OrderEntryMockingPracticeTests
         }
 
         [Test]
-        public void ValidOrderSummary_CalculatesTaxesForCustomer()
+        public void ValidOrderSummary_GetsTaxesForCustomer()
         {
             var order = MakeOrders();
 
@@ -440,11 +403,86 @@ namespace OrderEntryMockingPracticeTests
         }
         
         [Test]
-        public void InvalidOrder_ReturnsValidationListExceptions()
+        public void InvalidOrder_ThrowsValidationExeptionForDuplicateSkus()
         {
-            
+            var order = MakeOrders();
+
+            order.OrderItems[1].Product.Sku = order.OrderItems[0].Product.Sku;
+
+            var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
+
+            mockIProductRepository.Stub(a => a.IsInStock(Arg<string>.Is.Anything)).Return(false);
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            try
+            {
+                orderService.PlaceOrder(order);
+                Assert.Fail("Expected an Exception to be thrown.");
+            }
+            catch (Exception e)
+            {
+                Assert.That(e, Is.InstanceOf<OrderServiceException>());
+                var exception = e as OrderServiceException;
+                Assert.That(exception.ExceptionList, Contains.Item("Duplicate SKUs found."));
+            }
         }
 
+        [Test]
+        public void InvalidOrder_ThrowsValidationListForProductNotInStock()
+        {
+            var order = MakeOrders();
+
+            var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
+
+            mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(false);
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+
+            try
+            {
+                orderService.PlaceOrder(order);
+                Assert.Fail("Expected an Exception to be thrown.");
+            }
+            catch (Exception e)
+            {
+                Assert.That(e, Is.InstanceOf<OrderServiceException>());
+                var exception = e as OrderServiceException;
+                Assert.That(exception.ExceptionList, Contains.Item("Ordered item(s) not in stock."));
+            }
+        }
+
+
+        [Test]
+        public void InvalidOrder_ThrowsValidationListForProductNotInStockAndDuplicateSkus()
+        {
+            var order = MakeOrders();
+
+            order.OrderItems[1].Product.Sku = order.OrderItems[0].Product.Sku;
+            var mockIProductRepository = MockRepository.GenerateMock<IProductRepository>();
+
+            mockIProductRepository.Stub(a => a.IsInStock("ABCDE")).Return(false);
+
+            var orderService = new OrderService(_mockIProductRepository, _mockICustomerRepository, _mockIEmailService,
+                _mockIOrderFulfillmentService, _mockITaxRateService);
+
+            try
+
+            {
+                orderService.PlaceOrder(order);
+                Assert.Fail("Expected an Exception to be thrown.");
+            }
+            catch (Exception e)
+            {
+                Assert.That(e, Is.InstanceOf<OrderServiceException>());
+                var exception = e as OrderServiceException;
+                Assert.That(exception.ExceptionList, Contains.Item("Ordered item(s) not in stock."));
+                Assert.That(exception.ExceptionList, Contains.Item("Duplicate SKUs found."));
+            }
+        }
 
     }
 }

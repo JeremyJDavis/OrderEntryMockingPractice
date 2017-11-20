@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Runtime.Serialization;
 using OrderEntryMockingPractice.Models;
 
 namespace OrderEntryMockingPractice.Services
@@ -29,8 +26,7 @@ namespace OrderEntryMockingPractice.Services
         
         public OrderSummary PlaceOrder(Order order)
         {
-            if (!ValidateOrder(order))
-                return null;
+            ValidateOrder(order);
    
             var confirmation =  _orderFulfillmentService.Fulfill(order);
 
@@ -54,18 +50,57 @@ namespace OrderEntryMockingPractice.Services
             return orderSummary;
         }
 
-        private bool ValidateOrder(Order order)
+        private void ValidateOrder(Order order)
         {
             var skus = order.OrderItems.Select(x => x.Product.Sku);
 
+            var exceptionsList = new List<string>();
+
             var skusList = skus as IList<string> ?? skus.ToList();
-            return SkusAreUnique(skusList) && skusList.All(sku => _productRepository.IsInStock(sku));
+            if (!SkusAreUnique(skusList))
+            {
+                 exceptionsList.Add("Duplicate SKUs found.");
+            }
+
+            if (skusList.Any(sku => !_productRepository.IsInStock(sku)))
+            {
+                exceptionsList.Add("Ordered item(s) not in stock.");
+            }
+
+            if (exceptionsList.Any())
+            {
+                throw new OrderServiceException(exceptionsList);
+            }
         }
 
         private static bool SkusAreUnique(IEnumerable<string> skus)
         {
             var skuList = skus as IList<string> ?? skus.ToList();
             return skuList.Distinct().Count() == skuList.Count;
+        }
+    }
+
+    public class OrderServiceException : Exception
+    {
+        public List<string> ExceptionList { get; }
+
+        public OrderServiceException(List<string> exceptionList)
+        {
+            ExceptionList = exceptionList;
+        }
+
+        public override string Message
+        {
+            get
+            {
+                var message = "";
+
+                foreach (var reason in ExceptionList)
+                {
+                    message += $"{reason} ";
+                }
+                return message;
+            }
         }
     }
 }
